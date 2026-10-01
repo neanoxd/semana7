@@ -233,6 +233,9 @@ class _ItemizedSplitViewState extends State<ItemizedSplitView> {
         ? Set.from(editingItem.assignedPersonIds)
         : _people.map((p) => p.id).toSet();
 
+    String? priceError;
+    String? nameError;
+
     showDialog(
       context: context,
       builder: (ctx) {
@@ -248,18 +251,25 @@ class _ItemizedSplitViewState extends State<ItemizedSplitView> {
                     TextField(
                       controller: nameController,
                       autofocus: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Nombre del plato/bebida',
                         hintText: 'Ej. Hamburguesa doble',
-                        border: OutlineInputBorder(),
+                        errorText: nameError,
+                        border: const OutlineInputBorder(),
                       ),
                       textCapitalization: TextCapitalization.sentences,
+                      onChanged: (val) {
+                        if (nameError != null && val.trim().isNotEmpty) {
+                          setDialogState(() => nameError = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          flex: 2,
+                          flex: 3,
                           child: TextField(
                             controller: priceController,
                             keyboardType: const TextInputType.numberWithOptions(
@@ -267,41 +277,67 @@ class _ItemizedSplitViewState extends State<ItemizedSplitView> {
                             decoration: InputDecoration(
                               labelText: 'Precio Unitario',
                               prefixText: '${widget.currencySymbol} ',
+                              errorText: priceError,
                               border: const OutlineInputBorder(),
                             ),
+                            onChanged: (val) {
+                              setDialogState(() {
+                                final trimmed = val.trim();
+                                if (trimmed.isEmpty) {
+                                  priceError = null;
+                                } else {
+                                  final normalized =
+                                      trimmed.replaceAll(',', '.');
+                                  final parsed = double.tryParse(normalized);
+                                  if (parsed == null) {
+                                    priceError =
+                                        'Error: solo se permiten números (ej. 8.50)';
+                                  } else if (parsed <= 0) {
+                                    priceError =
+                                        'Error: el precio debe ser mayor a 0';
+                                  } else {
+                                    priceError = null;
+                                  }
+                                }
+                              });
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              IconButton.filledTonal(
-                                iconSize: 18,
-                                visualDensity: VisualDensity.compact,
-                                onPressed: quantity > 1
-                                    ? () => setDialogState(() => quantity--)
-                                    : null,
-                                icon: const Icon(Icons.remove),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 6.0),
-                                child: Text(
-                                  'x$quantity',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton.filledTonal(
+                                  iconSize: 18,
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: quantity > 1
+                                      ? () => setDialogState(() => quantity--)
+                                      : null,
+                                  icon: const Icon(Icons.remove),
                                 ),
-                              ),
-                              IconButton.filledTonal(
-                                iconSize: 18,
-                                visualDensity: VisualDensity.compact,
-                                onPressed: () =>
-                                    setDialogState(() => quantity++),
-                                icon: const Icon(Icons.add),
-                              ),
-                            ],
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6.0),
+                                  child: Text(
+                                    'x$quantity',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                ),
+                                IconButton.filledTonal(
+                                  iconSize: 18,
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () =>
+                                      setDialogState(() => quantity++),
+                                  icon: const Icon(Icons.add),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -383,17 +419,42 @@ class _ItemizedSplitViewState extends State<ItemizedSplitView> {
                 FilledButton(
                   onPressed: () {
                     final name = nameController.text.trim();
-                    final price = double.tryParse(
-                            priceController.text.replaceAll(',', '.').trim()) ??
-                        0.0;
-                    if (name.isEmpty || price <= 0 || assignedIds.isEmpty) {
+                    final priceRaw = priceController.text.trim();
+                    final normalized = priceRaw.replaceAll(',', '.');
+                    final parsedPrice = double.tryParse(normalized);
+
+                    bool hasError = false;
+                    setDialogState(() {
+                      if (name.isEmpty) {
+                        nameError = 'Ingresa el nombre del ítem';
+                        hasError = true;
+                      } else {
+                        nameError = null;
+                      }
+
+                      if (priceRaw.isEmpty) {
+                        priceError = 'Ingresa el precio del ítem';
+                        hasError = true;
+                      } else if (parsedPrice == null) {
+                        priceError =
+                            'Error: solo se permiten números (ej. 8.50)';
+                        hasError = true;
+                      } else if (parsedPrice <= 0) {
+                        priceError = 'Error: el precio debe ser mayor a 0';
+                        hasError = true;
+                      } else {
+                        priceError = null;
+                      }
+                    });
+
+                    if (hasError || assignedIds.isEmpty) {
                       return;
                     }
 
                     setState(() {
                       if (editingItem != null) {
                         editingItem.name = name;
-                        editingItem.price = price;
+                        editingItem.price = parsedPrice!;
                         editingItem.quantity = quantity;
                         editingItem.assignedPersonIds = assignedIds;
                       } else {
@@ -401,7 +462,7 @@ class _ItemizedSplitViewState extends State<ItemizedSplitView> {
                           BillItem(
                             id: '${_nextItemId++}',
                             name: name,
-                            price: price,
+                            price: parsedPrice!,
                             quantity: quantity,
                             assignedPersonIds: assignedIds,
                           ),

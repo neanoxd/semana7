@@ -36,19 +36,65 @@ class _QuickSplitViewState extends State<QuickSplitView> {
     super.dispose();
   }
 
+  String? get _amountError {
+    final text = _amountController.text.trim();
+    if (text.isEmpty) return null;
+    final normalized = text.replaceAll(',', '.');
+    final val = double.tryParse(normalized);
+    if (val == null) {
+      return 'Error: solo se permiten números (ej. 25.50)';
+    }
+    if (val < 0) {
+      return 'Error: el monto no puede ser negativo';
+    }
+    return null;
+  }
+
+  String? get _customTipError {
+    if (!_isCustomTip) return null;
+    final text = _customTipController.text.trim();
+    if (text.isEmpty) return null;
+    final normalized = text.replaceAll(',', '.');
+    final val = double.tryParse(normalized);
+    if (val == null) {
+      return 'Error: solo se permiten números (ej. 15)';
+    }
+    if (val < 0) {
+      return 'Error: el porcentaje no puede ser negativo';
+    }
+    return null;
+  }
+
+  String? get _taxError {
+    if (!_includeTax) return null;
+    final text = _taxPercentController.text.trim();
+    if (text.isEmpty) return 'Error: ingresa un porcentaje';
+    final normalized = text.replaceAll(',', '.');
+    final val = double.tryParse(normalized);
+    if (val == null) {
+      return 'Error: solo se permiten números (ej. 15)';
+    }
+    if (val < 0) {
+      return 'Error: el impuesto no puede ser negativo';
+    }
+    return null;
+  }
+
   double get _billAmount {
+    if (_amountError != null) return 0.0;
     final text = _amountController.text.replaceAll(',', '.').trim();
     return double.tryParse(text) ?? 0.0;
   }
 
   double get _taxPercent {
-    if (!_includeTax) return 0.0;
+    if (!_includeTax || _taxError != null) return 0.0;
     final text = _taxPercentController.text.replaceAll(',', '.').trim();
     return double.tryParse(text) ?? 0.0;
   }
 
   double get _effectiveTipPercent {
     if (_isCustomTip) {
+      if (_customTipError != null) return 0.0;
       final text = _customTipController.text.replaceAll(',', '.').trim();
       return double.tryParse(text) ?? 0.0;
     }
@@ -294,6 +340,7 @@ class _QuickSplitViewState extends State<QuickSplitView> {
                       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                       hintText: '0.00',
                       hintStyle: TextStyle(color: Colors.grey.shade400),
+                      errorText: _amountError,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -483,6 +530,7 @@ class _QuickSplitViewState extends State<QuickSplitView> {
                             decoration: InputDecoration(
                               labelText: 'Porcentaje personalizado',
                               suffixText: '%',
+                              errorText: _customTipError,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -546,6 +594,7 @@ class _QuickSplitViewState extends State<QuickSplitView> {
                               decoration: InputDecoration(
                                 labelText: '% Impuesto (Ej. 15% IVA Ecuador)',
                                 suffixText: '%',
+                                errorText: _taxError,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -594,7 +643,12 @@ class _QuickSplitViewState extends State<QuickSplitView> {
               Expanded(
                 flex: 2,
                 child: FilledButton.icon(
-                  onPressed: _billAmount > 0 ? _copySummary : null,
+                  onPressed: (_billAmount > 0 &&
+                          _amountError == null &&
+                          _customTipError == null &&
+                          _taxError == null)
+                      ? _copySummary
+                      : null,
                   icon: const Icon(Icons.share),
                   label: const Text('Copiar Resumen'),
                   style: FilledButton.styleFrom(
