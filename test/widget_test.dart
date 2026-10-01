@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:divisor_cuenta/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Divisor de Cuenta loads smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const DivisorCuentaApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that the title is present
+    expect(find.text('Divisor de Cuenta'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify that the navigation destinations are present
+    expect(find.text('División Rápida'), findsOneWidget);
+    expect(find.text('Por Ítems / Amigos'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify initial QuickSplitView content
+    expect(find.text('Total por persona'), findsOneWidget);
+    expect(find.text('Monto de la Cuenta'), findsOneWidget);
+
+    // Tap on 'Por Ítems / Amigos' destination
+    await tester.tap(find.text('Por Ítems / Amigos'));
+    await tester.pumpAndSettle();
+
+    // Verify ItemizedSplitView content
+    expect(find.text('Total de la Mesa'), findsOneWidget);
+    expect(find.textContaining('Amigos en la mesa'), findsOneWidget);
   });
 }
