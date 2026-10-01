@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:divisor_cuenta/data/redondeo_exacto.dart';
+import 'package:divisor_cuenta/data/redondeo_hacia_arriba.dart';
+import 'package:divisor_cuenta/domain/calcular_division.dart';
+import 'package:divisor_cuenta/domain/estrategia_redondeo.dart';
+import 'package:divisor_cuenta/domain/validar_entrada.dart';
 import 'package:divisor_cuenta/main.dart';
+import 'package:divisor_cuenta/presentation/divisor_controller.dart';
+import 'package:divisor_cuenta/presentation/formateador_moneda.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Smoke test inicial de DivisorCuentaApp', (WidgetTester tester) async {
+    final controller = DivisorController(
+      calcularDivision: CalcularDivision(),
+      validarEntrada: ValidarEntrada(),
+      formateador: FormateadorMoneda(),
+      estrategias: <String, EstrategiaRedondeo>{
+        'exacto': RedondeoExacto(),
+        'haciaArriba': RedondeoHaciaArriba(),
+      },
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(DivisorCuentaApp(controller: controller));
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Divisor de Cuenta'), findsOneWidget);
+    expect(find.text('Calcular'), findsOneWidget);
   });
 }
