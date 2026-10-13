@@ -6,6 +6,9 @@
 /// **Qué recibe:** Cadenas de texto opcionales provenientes de la interfaz.
 /// **Qué devuelve:** Mensajes de error en caso de fallo, o `null` si la entrada es válida.
 class ValidarEntrada {
+  /// Porcentaje máximo de propina permitido por la regla de negocio (100%).
+  static const double propinaMaxima = 100.0;
+
   /// Valida los valores numéricos de una cuenta a nivel de dominio.
   ///
   /// **Por qué existe:** Cumple con el Principio de Responsabilidad Única (SRP),
@@ -26,7 +29,7 @@ class ValidarEntrada {
     if (propina.isNaN || propina.isInfinite || propina < 0) {
       return 'Propina inválida';
     }
-    if (propina > 100) {
+    if (propina > propinaMaxima) {
       return 'La propina no puede superar el 100%';
     }
     return null;
@@ -69,7 +72,7 @@ class ValidarEntrada {
     if (valor == null || valor < 0) {
       return 'Propina inválida';
     }
-    if (valor > 100) {
+    if (valor > propinaMaxima) {
       return 'La propina no puede superar el 100%';
     }
     return null;
