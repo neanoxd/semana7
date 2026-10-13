@@ -26,6 +26,9 @@ class ValidarEntrada {
     if (propina.isNaN || propina.isInfinite || propina < 0) {
       return 'Propina inválida';
     }
+    if (propina > 100) {
+      return 'La propina no puede superar el 100%';
+    }
     return null;
   }
 
@@ -65,6 +68,9 @@ class ValidarEntrada {
     final valor = double.tryParse(normalizado);
     if (valor == null || valor < 0) {
       return 'Propina inválida';
+    }
+    if (valor > 100) {
+      return 'La propina no puede superar el 100%';
     }
     return null;
   }
