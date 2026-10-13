@@ -64,4 +64,14 @@ void main() {
     expect(resultadoArriba.montoPorPersona, isA<double>());
     expect(resultadoArriba.montoPorPersona, 4.00);
   });
+
+  test('Propina mayor a 100%: con monto 100, 4 personas y propina 150, la validación devuelve "La propina no puede superar el 100%"', () {
+    final error = validador.validar(100.0, 4, 150.0);
+    expect(error, equals('La propina no puede superar el 100%'));
+  });
+
+  test('Propina en límite exacto (100%): con monto 100, 4 personas y propina 100, la validación NO devuelve error', () {
+    final error = validador.validar(100.0, 4, 100.0);
+    expect(error, isNull);
+  });
 }
