@@ -37,3 +37,36 @@ jobs:
 
       - name: Compilar APK en modo debug
         run: flutter build apk --debug
+
+  entrega:
+    name: Entrega de APK
+    needs: verificar
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Generar APK de depuración
+        run: flutter build apk --debug
+
+      - name: Publicar APK como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: divisor-cuenta-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
